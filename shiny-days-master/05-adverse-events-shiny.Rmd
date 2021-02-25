@@ -1,5 +1,5 @@
 ---
-title: "Adverse Events"
+title: "Cereal Sales"
 resource_files:
 - .httr-oauth .Renviron
 - .httr-oauth
@@ -32,8 +32,22 @@ mtp_data2 <- read_csv("mtp_data2.csv")
 
 mtp <- mtp_data2 %>% left_join(MTP_Data)
 
-create_price <- function(min, max){# 
-  sprintf('[%f+TO+%f]', min, max)}
+# Clean Data
+mtp_prepped <- mtp %>% 
+  mutate(promo = factor(promo), 
+         promo = recode(promo, "0" = "No Promo", "1" = "Promo"),
+         ad =  recode(ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad"),
+         brand =  recode(brand,  "MILLS CINNAMON TST CR" = "CINNAMON TST CR",
+                                 "MILLS CHEERIOS" = "CHEERIOS",
+                                 "MILLS LUCKY CHARMS" = "LUCKY CHARMS",
+                                 "MILLS COCOA PUFFS" = "COCOA PUFFS",
+                                 "MILLS KIX" = "KIX"),
+         TotalSale = units*price,
+         TotalVolume = units*volume) %>% 
+  separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge") %>% 
+  mutate(company =  recode(company, "GENERAL" = "GENERAL MILLS"))
+
+
 ```
 
 Column {.sidebar}
@@ -44,48 +58,42 @@ Column {.sidebar}
 
 textInput('sel_name', 'Brand Name Drug', value = "KELLOGGS")
 
-sliderInput('prices', 'Age Range', min = .1, max = 80, value = c(.5,2))
+sliderInput('week', 
+            'Week Range',
+            min = min(mtp_prepped$week), 
+            max = max(mtp_prepped$week),
+            value = c(1490, 1515))
 
-
-price <- reactive({create_price(input$prices[1],input$prices[2])})
-
-mtp_KELLOGGS <- reactive({
-  mtp<- mutate(mtp, TotalSale = units*price) %>% mutate(mtp, TotalVolume = units*volume) %>% separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge")
-
-
-mtp$promo<- factor(mtp$promo)
-mtp$promo<- recode(mtp$promo, "0" = "No Promo", "1" = "Promo")
-mtp$ad<- recode(mtp$ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad")
-mtp$company<- recode(mtp$company, "GENERAL" = "GENERAL MILLS")
-mtp$brand<- recode(mtp$brand, "MILLS CINNAMON TST CR" = "CINNAMON TST CR")
-
-mtp$brand<- recode(mtp$brand, "MILLS CHEERIOS" = "CHEERIOS")
-
-mtp$brand<- recode(mtp$brand, "MILLS LUCKY CHARMS" = "LUCKY CHARMS")
-
-mtp$brand<- recode(mtp$brand, "MILLS COCOA PUFFS" = "COCOA PUFFS")
-
-mtp$brand<- recode(mtp$brand, "MILLS KIX" = "KIX")
-
-
-
-df <- filter(mtp, company == input$sel_name)
-
-df <- data.frame(df)
+mtp_sel <- reactive({ 
+  mtp_prepped %>% 
+    filter(company == input$sel_name,
+           week >= input$week[1],
+           week <= input$week[2])
 
 })
+
 
 ```
 
 Column {data-width=650}
 -----------------------------------------------------------------------
 
-### All Events
+### Time Horizon
+
+```{r}
+time_label <- reactive({
+  sprintf("%d to %d", input$week[1], input$week[2])
+})
+renderValueBox({valueBox(time_label(), icon = 'glyphicon-cal')})
+```
+
+
+### All Sales
 
 ```{r}
 renderPlot({
-  req(mtp_KELLOGGS())
-  mtp_KELLOGGS() %>% 
+  req(mtp_sel())
+  mtp_sel() %>% 
   group_by(brand) %>% 
    summarise(units = sum(units)) %>% 
   ggplot() +
@@ -107,26 +115,14 @@ renderPlot({
 Column {data-width=350}
 -----------------------------------------------------------------------
 
-### Age Range
-
-```{r}
-price_label <- reactive({
-  str_replace_all(price(), fixed("+"), " ") %>% 
-    str_replace(fixed("["), "") %>% 
-    str_replace(fixed("]"), "") %>% 
-    str_replace(fixed("TO"), "-")     
-})
-renderValueBox({valueBox(price_label(), icon = 'glyphicon-user')})
-```
 
 
-
-### Events by Gender
+### Sales by Flavor
 
 ```{r}
 renderPlot({
-  req(mtp_KELLOGGS())
-  ggplot(mtp_KELLOGGS()) +
+  req(mtp_sel())
+  ggplot(mtp_sel()) +
     geom_bar(aes(reorder(brand,units), units, fill = flavor), stat = 'identity') +
     facet_wrap(~flavor)+
     coord_flip() +
@@ -143,5 +139,24 @@ renderPlot({
 ```
 
 
+### Sales by Promo
 
+```{r}
+renderPlot({
+  req(mtp_sel())
+  ggplot(mtp_sel()) +
+    geom_bar(aes(reorder(brand,units), units, fill = promo), stat = 'identity') +
+    facet_wrap(~promo)+
+    coord_flip() +
+    labs(
+      title = input$sel_name,
+      x = NULL,
+      y = NULL
+    ) +
+    theme_minimal() + 
+    guides(fill = FALSE) + 
+  scale_fill_manual(values = c("#d54a30","#4c83b6", "#d0d530", "#9030d5"))
+
+})
+```
 
