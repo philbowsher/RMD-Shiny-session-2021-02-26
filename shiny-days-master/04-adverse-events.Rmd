@@ -1,0 +1,112 @@
+---
+title: "Adverse Events"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    theme: readable
+    vertical_layout: fill
+params:
+  company: KELLOGGS
+---
+
+
+```{r setup, include=FALSE}
+library(ggthemes)
+library(readr)
+library(GGally)
+library(gridExtra)
+library(kableExtra)
+library(tidyverse)
+library(GGally)
+library(flexdashboard)
+
+# Load Data
+
+MTP_Data <- read_csv("MTP_Data.csv")
+mtp_data2 <- read_csv("mtp_data2.csv")
+
+mtp <- mtp_data2 %>% left_join(MTP_Data)
+
+create_price <- function(min, max){# 
+  sprintf('[%f+TO+%f]', min, max)}
+```
+
+```{r}
+
+price2 <- create_price(.5,2)
+
+mtp<- mutate(mtp, TotalSale = units*price) %>% mutate(mtp, TotalVolume = units*volume) %>% separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge")
+
+
+mtp$promo<- factor(mtp$promo)
+mtp$promo<- recode(mtp$promo, "0" = "No Promo", "1" = "Promo")
+mtp$ad<- recode(mtp$ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad")
+mtp$company<- recode(mtp$company, "GENERAL" = "GENERAL MILLS")
+mtp$brand<- recode(mtp$brand, "MILLS CINNAMON TST CR" = "CINNAMON TST CR")
+
+mtp$brand<- recode(mtp$brand, "MILLS CHEERIOS" = "CHEERIOS")
+
+mtp$brand<- recode(mtp$brand, "MILLS LUCKY CHARMS" = "LUCKY CHARMS")
+
+mtp$brand<- recode(mtp$brand, "MILLS COCOA PUFFS" = "COCOA PUFFS")
+
+mtp$brand<- recode(mtp$brand, "MILLS KIX" = "KIX")
+
+
+
+mtp_KELLOGGS <- filter(mtp, company == params$company)
+
+```
+
+Column 
+-----------------------------------------------------------------------
+
+### All Events
+
+```{r}
+mtp_KELLOGGS %>% 
+  group_by(brand) %>% 
+  summarise(units = sum(units)) %>% 
+  ggplot() +
+  geom_bar(aes(reorder(brand,units), units), stat = 'identity') +
+  coord_flip() +
+  labs(
+    title = params$drug,
+    x = NULL,
+    y = NULL
+  ) +
+  theme_minimal()
+```
+
+
+
+Column 
+-----------------------------------------------------------------------
+
+### Age Range
+
+```{r}
+price_label <- str_replace_all(price2, fixed("+"), " ") %>% 
+    str_replace(fixed("["), "") %>% 
+    str_replace(fixed("]"), "") %>% 
+    str_replace(fixed("TO"), "-")     
+
+valueBox(price_label, icon = 'glyphicon-user')
+```
+
+### Events by Gender
+
+```{r}
+ggplot(mtp_KELLOGGS) +
+  geom_bar(aes(reorder(brand,units), units, fill = flavor), stat = 'identity') +
+  facet_wrap(~flavor)+
+  coord_flip() +
+  labs(
+    title = params$drug,
+    x = NULL,
+    y = NULL
+  ) +
+  theme_minimal() + 
+  guides(fill = FALSE) + 
+  scale_fill_manual(values = c("#d54a30","#4c83b6", "#d0d530", "#9030d5"))
+```

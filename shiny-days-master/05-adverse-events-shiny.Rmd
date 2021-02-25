@@ -1,0 +1,147 @@
+---
+title: "Adverse Events"
+resource_files:
+- .httr-oauth .Renviron
+- .httr-oauth
+- .Renviron
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+    css: styles.css
+    orientation: columns
+    theme: readable
+    vertical_layout: fill
+---
+
+
+
+```{r setup, include=FALSE}
+library(ggthemes)
+library(readr)
+library(GGally)
+library(gridExtra)
+library(kableExtra)
+library(tidyverse)
+library(GGally)
+library(flexdashboard)
+
+# Load Data
+
+MTP_Data <- read_csv("MTP_Data.csv")
+mtp_data2 <- read_csv("mtp_data2.csv")
+
+mtp <- mtp_data2 %>% left_join(MTP_Data)
+
+create_price <- function(min, max){# 
+  sprintf('[%f+TO+%f]', min, max)}
+```
+
+Column {.sidebar}
+------------
+
+```{r inputs}
+
+
+textInput('sel_name', 'Brand Name Drug', value = "KELLOGGS")
+
+sliderInput('prices', 'Age Range', min = .1, max = 80, value = c(.5,2))
+
+
+price <- reactive({create_price(input$prices[1],input$prices[2])})
+
+mtp_KELLOGGS <- reactive({
+  mtp<- mutate(mtp, TotalSale = units*price) %>% mutate(mtp, TotalVolume = units*volume) %>% separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge")
+
+
+mtp$promo<- factor(mtp$promo)
+mtp$promo<- recode(mtp$promo, "0" = "No Promo", "1" = "Promo")
+mtp$ad<- recode(mtp$ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad")
+mtp$company<- recode(mtp$company, "GENERAL" = "GENERAL MILLS")
+mtp$brand<- recode(mtp$brand, "MILLS CINNAMON TST CR" = "CINNAMON TST CR")
+
+mtp$brand<- recode(mtp$brand, "MILLS CHEERIOS" = "CHEERIOS")
+
+mtp$brand<- recode(mtp$brand, "MILLS LUCKY CHARMS" = "LUCKY CHARMS")
+
+mtp$brand<- recode(mtp$brand, "MILLS COCOA PUFFS" = "COCOA PUFFS")
+
+mtp$brand<- recode(mtp$brand, "MILLS KIX" = "KIX")
+
+
+
+df <- filter(mtp, company == input$sel_name)
+
+df <- data.frame(df)
+
+})
+
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### All Events
+
+```{r}
+renderPlot({
+  req(mtp_KELLOGGS())
+  mtp_KELLOGGS() %>% 
+  group_by(brand) %>% 
+   summarise(units = sum(units)) %>% 
+  ggplot() +
+  geom_bar(aes(reorder(brand,units), units), stat = 'identity') +
+    coord_flip() +
+    labs(
+      title = input$sel_name,
+      x = NULL,
+      y = NULL
+    ) +
+    theme_minimal()
+})
+
+
+```
+
+
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Age Range
+
+```{r}
+price_label <- reactive({
+  str_replace_all(price(), fixed("+"), " ") %>% 
+    str_replace(fixed("["), "") %>% 
+    str_replace(fixed("]"), "") %>% 
+    str_replace(fixed("TO"), "-")     
+})
+renderValueBox({valueBox(price_label(), icon = 'glyphicon-user')})
+```
+
+
+
+### Events by Gender
+
+```{r}
+renderPlot({
+  req(mtp_KELLOGGS())
+  ggplot(mtp_KELLOGGS()) +
+    geom_bar(aes(reorder(brand,units), units, fill = flavor), stat = 'identity') +
+    facet_wrap(~flavor)+
+    coord_flip() +
+    labs(
+      title = input$sel_name,
+      x = NULL,
+      y = NULL
+    ) +
+    theme_minimal() + 
+    guides(fill = FALSE) + 
+  scale_fill_manual(values = c("#d54a30","#4c83b6", "#d0d530", "#9030d5"))
+
+})
+```
+
+
+
+

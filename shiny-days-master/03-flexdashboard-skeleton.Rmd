@@ -1,0 +1,95 @@
+---
+title: "Adverse Events"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    theme: readable
+    vertical_layout: fill
+---
+
+
+```{r setup, include=FALSE}
+library(ggthemes)
+library(readr)
+library(GGally)
+library(gridExtra)
+library(kableExtra)
+library(tidyverse)
+library(GGally)
+
+# Load Data
+
+MTP_Data <- read_csv("MTP_Data.csv")
+mtp_data2 <- read_csv("mtp_data2.csv")
+
+mtp <- mtp_data2 %>% left_join(MTP_Data)
+
+```
+
+```{r}
+
+mtp<- mutate(mtp, TotalSale = units*price) %>% mutate(mtp, TotalVolume = units*volume) %>% separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge")
+
+
+mtp$promo<- factor(mtp$promo)
+mtp$promo<- recode(mtp$promo, "0" = "No Promo", "1" = "Promo")
+mtp$ad<- recode(mtp$ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad")
+mtp$company<- recode(mtp$company, "GENERAL" = "GENERAL MILLS")
+mtp$brand<- recode(mtp$brand, "MILLS CINNAMON TST CR" = "CINNAMON TST CR")
+
+mtp$brand<- recode(mtp$brand, "MILLS CHEERIOS" = "CHEERIOS")
+
+mtp$brand<- recode(mtp$brand, "MILLS LUCKY CHARMS" = "LUCKY CHARMS")
+
+mtp$brand<- recode(mtp$brand, "MILLS COCOA PUFFS" = "COCOA PUFFS")
+
+mtp$brand<- recode(mtp$brand, "MILLS KIX" = "KIX")
+
+#review the updated data
+glimpse(mtp)
+
+distinct(mtp, brand)
+
+
+
+
+# create_price <- function(min, max){# sprintf('[%f+TO+%f]', min, max)}
+
+company_name <- "KELLOGGS"
+
+
+
+# specify age range
+# price2 <- create_price(.5,2)
+
+
+mtp_KELLOGGS <- filter(mtp, company == company_name )
+
+```
+
+
+Column 
+-----------------------------------------------------------------------
+
+### All Events
+
+
+```{r}
+
+```
+
+Column 
+-----------------------------------------------------------------------
+
+### Age Range
+
+```{r}
+
+```
+
+
+### Events by Gender 
+
+```{r}
+
+```
