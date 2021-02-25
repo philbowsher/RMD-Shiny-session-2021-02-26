@@ -42,6 +42,8 @@ distinct(mtp, brand)
 
 distinct(mtp, company)
 
+write_csv(mtp, "mtp.csv")
+
 
 # create_price <- function(min, max){# sprintf('[%f+TO+%f]', min, max)}
 
