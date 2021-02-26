@@ -1,8 +1,8 @@
-# RStudio-Connect-session-2019-12-06 Workshop by Phil Bowsher & Shannon Hagerty on Dec 06, 2019
+# RStudio-Connect-session-2021-02-26 Workshop by Phil Bowsher & Shannon Hagerty on Feb 26, 2021
 
 Live Presentation is here:
 
-https://colorado.rstudio.com/rsc/content/7511/RSC2019Workshop.html#1
+https://colorado.rstudio.com/rsc/RStudio_Workflows/RSC2021Workshop.html#1
 
 Go here after:
 
