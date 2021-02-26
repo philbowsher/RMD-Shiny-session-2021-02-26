@@ -22,10 +22,10 @@ library(GGally)
 library(flexdashboard)
 library(pins)
 
-title <- cat("Week", params$week1, "to", params$week2)
+title <- paste("Week", params$week1, "to", params$week2)
 
 # Load Data
-mtp_KELLOGGS <- pin_get("phil/mtp_KELLOGGS", board = "rsconnect") %>% 
+mtp_KELLOGGS <- pin_get("KELLOGGS", board = "rsconnect") %>% 
     filter(week >= params$week1,
            week <= params$week2)
 ```

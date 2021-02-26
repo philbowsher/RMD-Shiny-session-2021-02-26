@@ -66,10 +66,14 @@ mtp_KELLOGGS %>% write_csv("mtp_KELLOGGS.csv")
 
 Publish Pin
 ```{r}
-pins::board_register_rsconnect()
+# pins::board_register_rsconnect()
+
+board_register("rsconnect",
+               server = "CONNECT_SERVER",
+               key = "CONNECT_SERVER_KEY")
 
 
-read_csv('mtp_KELLOGGS.csv') %>% pin("mtp_KELLOGGS", description = "KELLOGGS Daily Sales", board = "rsconnect")
+pin(mtp_KELLOGGS, name = "KELLOGGS" , description = "KELLOGGS Daily Sales", board = "rsconnect")
 ```
 
 
