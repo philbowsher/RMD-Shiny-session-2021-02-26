@@ -22,9 +22,13 @@ mtp<- mutate(mtp, TotalSale = units*price) %>% mutate(mtp, TotalVolume = units*v
 
 
 mtp$promo<- factor(mtp$promo)
+
 mtp$promo<- recode(mtp$promo, "0" = "No Promo", "1" = "Promo")
+
 mtp$ad<- recode(mtp$ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad")
+
 mtp$company<- recode(mtp$company, "GENERAL" = "GENERAL MILLS")
+
 mtp$brand<- recode(mtp$brand, "MILLS CINNAMON TST CR" = "CINNAMON TST CR")
 
 mtp$brand<- recode(mtp$brand, "MILLS CHEERIOS" = "CHEERIOS")
@@ -45,14 +49,7 @@ distinct(mtp, company)
 write_csv(mtp, "mtp.csv")
 
 
-# create_price <- function(min, max){# sprintf('[%f+TO+%f]', min, max)}
-
 company_name <- "KELLOGGS"
-
-
-
-# specify age range
-# price2 <- create_price(.5,2)
 
 
 mtp_KELLOGGS <- filter(mtp, company == company_name )

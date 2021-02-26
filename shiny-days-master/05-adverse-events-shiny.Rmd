@@ -33,8 +33,8 @@ mtp_data2 <- read_csv("mtp_data2.csv")
 mtp <- mtp_data2 %>% left_join(MTP_Data)
 
 # Clean Data
-mtp_prepped <- mtp %>% 
-  mutate(promo = factor(promo), 
+mtp_prepped <- mtp %>% separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge") %>% 
+  mutate(company =  recode(company, "GENERAL" = "GENERAL MILLS")) %>% mutate(promo = factor(promo), 
          promo = recode(promo, "0" = "No Promo", "1" = "Promo"),
          ad =  recode(ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad"),
          brand =  recode(brand,  "MILLS CINNAMON TST CR" = "CINNAMON TST CR",
@@ -43,9 +43,8 @@ mtp_prepped <- mtp %>%
                                  "MILLS COCOA PUFFS" = "COCOA PUFFS",
                                  "MILLS KIX" = "KIX"),
          TotalSale = units*price,
-         TotalVolume = units*volume) %>% 
-  separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge") %>% 
-  mutate(company =  recode(company, "GENERAL" = "GENERAL MILLS"))
+         TotalVolume = units*volume)
+  
 
 
 ```
@@ -159,4 +158,3 @@ renderPlot({
 
 })
 ```
-

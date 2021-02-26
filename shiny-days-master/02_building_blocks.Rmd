@@ -3,7 +3,7 @@ title: 'Getting Started'
 output: html_notebook
 ---
 
-# Adverse Events
+# Cereal Sales
 
 ## Accessing Data
 
@@ -15,10 +15,11 @@ library(gridExtra)
 library(kableExtra)
 library(tidyverse)
 library(GGally)
+library(pins)
 ```
 
 
-Next, we'll write some helper functions to use the openFDA API and package to query adverse events data.
+Next, we'll import and join the 2 datasets.
 
 ```{r mtp}
 # Load Data
@@ -32,47 +33,45 @@ mtp <- mtp_data2 %>% left_join(MTP_Data)
 glimpse(mtp)
 ```
 
-Using our openFDA helper functions, we can pull adverse event data by gender for a specific drug and age range. We can also lookup the drug's active ingredients.
+Using our imported data, we can pull only the KELLOGGS data.
 
 ```{r pull-data}
-mtp<- mutate(mtp, TotalSale = units*price) %>% mutate(mtp, TotalVolume = units*volume) %>% separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge")
 
-
-mtp$promo<- factor(mtp$promo)
-mtp$promo<- recode(mtp$promo, "0" = "No Promo", "1" = "Promo")
-mtp$ad<- recode(mtp$ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad")
-mtp$company<- recode(mtp$company, "GENERAL" = "GENERAL MILLS")
-mtp$brand<- recode(mtp$brand, "MILLS CINNAMON TST CR" = "CINNAMON TST CR")
-
-mtp$brand<- recode(mtp$brand, "MILLS CHEERIOS" = "CHEERIOS")
-
-mtp$brand<- recode(mtp$brand, "MILLS LUCKY CHARMS" = "LUCKY CHARMS")
-
-mtp$brand<- recode(mtp$brand, "MILLS COCOA PUFFS" = "COCOA PUFFS")
-
-mtp$brand<- recode(mtp$brand, "MILLS KIX" = "KIX")
+mtp_prepped <- mtp %>% separate(brand, into = c("company", "brand"), sep = "\\ ", extra = "merge") %>% 
+  mutate(company =  recode(company, "GENERAL" = "GENERAL MILLS")) %>% mutate(promo = factor(promo), 
+         promo = recode(promo, "0" = "No Promo", "1" = "Promo"),
+         ad =  recode(ad, "NONE" = "No Ad", "A" = "Big Ad", "B" = "Mid/Small Ad"),
+         brand =  recode(brand,  "MILLS CINNAMON TST CR" = "CINNAMON TST CR",
+                                 "MILLS CHEERIOS" = "CHEERIOS",
+                                 "MILLS LUCKY CHARMS" = "LUCKY CHARMS",
+                                 "MILLS COCOA PUFFS" = "COCOA PUFFS",
+                                 "MILLS KIX" = "KIX"),
+         TotalSale = units*price,
+         TotalVolume = units*volume)
 
 #review the updated data
-glimpse(mtp)
+glimpse(mtp_prepped)
 
-distinct(mtp, brand)
+distinct(mtp_prepped, brand)
 
-
-
-
-# create_price <- function(min, max){# sprintf('[%f+TO+%f]', min, max)}
 
 company_name <- "KELLOGGS"
 
 
+mtp_KELLOGGS <- filter(mtp_prepped, company == company_name )
 
-# specify age range
-# price2 <- create_price(.5,2)
-
-
-mtp_KELLOGGS <- filter(mtp, company == company_name )
+mtp_KELLOGGS %>% write_csv("mtp_KELLOGGS.csv")
 
 ```
+
+Publish Pin
+```{r}
+pins::board_register_rsconnect()
+
+
+read_csv('mtp_KELLOGGS.csv') %>% pin("mtp_KELLOGGS", description = "KELLOGGS Daily Sales", board = "rsconnect")
+```
+
 
 ## Plotting
 
